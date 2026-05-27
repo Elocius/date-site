@@ -9,6 +9,7 @@ export default function DateRequestWebsite() {
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
   const [confetti, setConfetti] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState("idle");
 
   const dateOptions = [
     { label: "Hemmamys", emoji: "🏠", icon: Home, desc: "Film, snacks och filt" },
@@ -20,20 +21,50 @@ export default function DateRequestWebsite() {
   const times = ["16:00", "17:30", "18:00", "19:00", "20:00"];
 
   function moveNoButton() {
-    const x = Math.floor(Math.random() * 700) - 350;
-    const y = Math.floor(Math.random() * 500) - 250;
+    const isMobile = window.innerWidth < 640;
+    const maxX = isMobile ? 85 : 350;
+    const maxY = isMobile ? 110 : 250;
+    const x = Math.floor(Math.random() * (maxX * 2)) - maxX;
+    const y = Math.floor(Math.random() * (maxY * 2)) - maxY;
     setNoPos({ x, y });
   }
+
+  const today = new Date().toISOString().split("T")[0];
 
   function sayYes() {
     setConfetti(true);
     setStep("activity");
   }
 
-  function finish(time) {
+  async function finish(time) {
     setSelectedTime(time);
     setConfetti(true);
     setStep("done");
+    setSubmitStatus("sending");
+
+    try {
+      const response = await fetch("https://formspree.io/f/xgoqpjde", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          dateType,
+          selectedDate,
+          selectedTime: time,
+          message: `Dejt bokad: ${dateType}, ${selectedDate}, ${time}`,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Formspree failed");
+      }
+
+      setSubmitStatus("sent");
+    } catch (error) {
+      setSubmitStatus("error");
+    }
   }
 
   return (
@@ -70,6 +101,8 @@ export default function DateRequestWebsite() {
                 </button>
 
                 <motion.button
+                  onPointerMove={moveNoButton}
+                  onPointerEnter={moveNoButton}
                   onMouseMove={moveNoButton}
                   onMouseEnter={moveNoButton}
                   onFocus={moveNoButton}
@@ -139,6 +172,7 @@ export default function DateRequestWebsite() {
 
               <input
                 type="date"
+                min={today}
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
                 className="mb-6 w-full rounded-2xl border-2 border-pink-200 bg-white px-5 py-4 text-lg outline-none transition focus:border-rose-400"
@@ -204,6 +238,24 @@ export default function DateRequestWebsite() {
               <p className="rounded-3xl bg-pink-100 p-5 text-xl font-bold text-rose-700">
                 Jag ser redan fram emot det. 💘
               </p>
+
+              {submitStatus === "sending" && (
+                <p className="mt-4 text-sm font-bold text-slate-500">
+                  Skickar bokningen... 💌
+                </p>
+              )}
+
+              {submitStatus === "sent" && (
+                <p className="mt-4 text-sm font-bold text-green-600">
+                  Bokningen är skickad. ✅
+                </p>
+              )}
+
+              {submitStatus === "error" && (
+                <p className="mt-4 text-sm font-bold text-red-500">
+                  Bokningen kunde inte skickas, men valet syns här på skärmen. 💕
+                </p>
+              )}
             </motion.section>
           )}
         </AnimatePresence>
