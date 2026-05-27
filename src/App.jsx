@@ -143,8 +143,8 @@ export default function DateRequestWebsite() {
   }
 
   function calendarLink() {
-    const title = encodeURIComponent(`Dejt med ${bookerName || "mystisk person"}`);
-    const details = encodeURIComponent(`${dateType} 💕`);
+    const title = encodeURIComponent("Dejt med Filip");
+    const details = encodeURIComponent(`Bokad av ${bookerName || "mystisk person"}. Aktivitet: ${dateType} 💕`);
     const start = new Date(`${selectedDate}T${selectedTime}:00`);
     const end = new Date(start.getTime() + 2 * 60 * 60 * 1000);
     const format = (date) => date.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
